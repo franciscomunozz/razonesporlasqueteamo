@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Razones por las que te amo ❤</title>
+  
+  <style>
+    :root{
+      --bg-start: #ffeef5;
+      --bg-end: #fff7fb;
+      --card-shadow: rgba(19,12,25,0.06);
+      --tooltip-bg: rgba(255,255,255,0.98);
+      --tooltip-border: rgba(230,120,160,0.18);
+      --gap: 4; /* unidades en coordenadas viewBox */
+      --max-width: 980px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+
+    html,body{height:100%;margin:0}
+    body{
+      background: radial-gradient(800px 400px at 10% 10%, rgba(255,230,245,0.7), transparent 30%),
+                  radial-gradient(600px 300px at 90% 90%, rgba(255,245,250,0.9), transparent 20%),
+                  linear-gradient(180deg,var(--bg-start),var(--bg-end));
+      display:flex;
+      align-items:center;
+      flex-direction: column;
+      justify-content:center;
+      padding:20px;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* contenedor minimalista: solo el corazón */
+    .stage{
+      width:100%;
+      max-width:var(--max-width);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      box-sizing:border-box;
+    }
+
+    svg#heart-mosaic{
+      width:100%;
+      height:auto;
+      display:block;
+      max-height:min(82vmin, 820px);
+      filter: drop-shadow(0 18px 40px var(--card-shadow));
+      border-radius:18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,250,252,0.85));
+      padding:10px;
+    }
+
+    /* piezas: sin traslaciones, solo escala+rotación para evitar jitter */
+    .piece{
+      transition: transform 210ms cubic-bezier(.2,.9,.3,1), filter 210ms;
+      transform-origin: center center;
+      transform-box: fill-box;
+      will-change: transform;
+      cursor: pointer;
+    }
+    .piece:hover{
+      transform: scale(1.08) rotate(var(--rot));
+      filter: drop-shadow(0 18px 32px rgba(0,0,0,0.08)) saturate(1.03);
+    }
+    .piece:active{
+      transform: scale(.98) rotate(var(--rot));
+    }
+
+    /* tooltip limpio y claro */
+    .tooltip{
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -140%) scale(.96);
+      min-width: 160px;
+      max-width: 320px;
+      padding: 10px 12px;
+      background: var(--tooltip-bg);
+      color: #2b2b2b;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(11,8,20,0.06);
+      border: 1px solid var(--tooltip-border);
+      font-size: 14px;
+      line-height: 1.3;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 150ms ease, transform 150ms cubic-bezier(.2,.9,.3,1);
+      font-weight: 500;
+    }
+    .tooltip.show{
+      opacity: 1;
+      transform: translate(-50%, -160%) scale(1);
+      pointer-events: auto;
+    }
+
+    /* small accessibility helper for screen readers: hidden text but readable */
+    .sr-only{
+      position: absolute !important;
+      height: 1px; width: 1px;
+      overflow: hidden; clip: rect(1px,1px,1px,1px);
+      white-space: nowrap; border: 0; padding: 0; margin: -1px;
+    }
+
+    @media (max-width:600px){
+      .tooltip{ font-size:13px; min-width:140px; max-width:220px; }
+    }
+  </style>
+    <link rel="icon" type="image/x-icon" href="favicon.ico"></head>
+<body>
+   <div style="text-align:center; margin-bottom:12px; 
+   margin-top: 50px;padding: 5px;font-family: Inter, ui-sans-serif, system-ui; font-size:16px; color:#4a2a3a;">
+    Hola mi fepita, en este corazón podrás encontrar <b>algunas</b> de todas las razones por las que te amo. Siento que dimensionar el amor que siento por ti en palabras es un trabajo arduo y no algo que pueda cranear en una mañana, o un día. Es por eso que esta página web la iré actualizando <b>todos los días</b> con algo nuevo. Ya que todos los días aprendo algo nuevo de ti, y descubro nuevas razones por las que te amo. Así que vuelve seguido para descubrir más razones. Te amo con todo mi corazón. 💖
+    <br>
+    (Haz click en los cuadraditos 💘)
+  </div>
+  <div class="stage" role="img" aria-label="Un corazón formado por muchas razones">
+    <!-- SVG size and viewBox tuned for responsive scaling -->
+    <svg id="heart-mosaic" viewBox="0 0 800 700" aria-hidden="false" role="presentation">
+      <defs>
+        <!-- heart path used as clip -->
+        <path id="heartPath" d="M400 590 C 200 420 80 300 80 200 C 80 120 160 80 240 140 C 300 190 350 250 400 300 C 450 250 500 190 560 140 C 640 80 720 120 720 200 C 720 300 600 420 400 590 Z" />
+        <clipPath id="heartClip"><use href="#heartPath" /></clipPath>
+      </defs>
+
+      <!-- grid group (JS añadirá rects aquí) -->
+      <g id="grid" clip-path="url(#heartClip)"></g>
+
+      <!-- faint stroke around the heart -->
+      <use href="#heartPath" fill="none" stroke="rgba(200,60,120,0.08)" stroke-width="6" stroke-linejoin="round" />
+    </svg>
+  </div>
+
+  <div id="tooltip" class="tooltip" role="status" aria-live="polite"></div>
+  <span class="sr-only">Corazón de razones</span>
+
+  <script>
+    /* ===== Datos internos: razones (cada una aparece UNA sola vez) =====
+       Modifica aquí si quieres cambiar textos. No hay interfaz visual para editarlas.
+       Cada objeto: { id, type, text } . Todos los imports/weights internos están ajustados a 1.
+    */
+    const reasons = [
+      { id: 'r1',  type: 'Tu corazón', text: 'Amo tu corazón, porque perdonas incluso cuando no tienes razones para hacerlo.' },
+      { id: 'r2',  type: 'Tu corazón',  text: 'Amo tu corazón, porque tu forma de cuidar a los que te importan me inspira.' },
+      { id: 'r3',  type: 'Tu corazón',    text: 'Amo tu corazón, un corazón que abraza sin tocar, y a la distancia..' },
+      { id: 'r4',  type: 'Tu corazón',      text: 'Amo tu corazón, porque tu corazón siente las cosas con una profundidad que no había visto antes.' },
+      { id: 'r5',  type: 'Apoyo',      text: 'Porque me apoyas en mis decisiones.' },
+      { id: 'r6',  type: 'Curiosidad', text: 'Porque compartes tus sueños y escuchas los míos.' },
+      { id: 'r7',  type: 'Tu mente',   text: 'Porque admiro cómo piensas.' },
+      { id: 'r8',  type: 'Tu esencia', text: 'Porque eres auténtica en todo momento.' },
+      { id: 'r9',  type: 'Atracción', text: 'Amo la forma en que luces, esos ojos café tan preciosos me quitan el sueño y me hacen soñar despierto.' },
+      { id: 'r10', type: 'Atracción', text: 'Amo tu sonrisa, esa que pese a verla sólo en fotografías o llamadas, ilumina mi día y me hace sentir afortunado.' },
+      { id: 'r11', type: 'Tu mente',   text: 'Amo tu mente y tu madurez emocional tan profunda.' },
+      { id: 'r12', type: 'Paciencia',    text: 'Amo tu paciencia, que pese a que puedan haber momentos díficiles, siempre estás ahi para mí.'},
+      { id: 'r13', type: 'Tu corazón',    text: 'Amo la forma tan preciosa que tienes para llegar a las personas.'},
+      { id: 'r14', type: 'Tu corazón',    text: 'Amo tu corazón, porque eres bondadosa, una gran amiga, una excelente hermana y una persona increíble.'},
+      { id: 'r15', type: 'Detalles',   text: 'Amo los detalles que tienes conmigo, aunque estemos lejos siempre encuentras la forma de hacerme sentir especial, ya sea subiendome a historias, reposteando publicaciones mías, eres increíble.' },
+
+      { id: 'r18', type: 'Risas',      text: 'Amo tus risas, esas que contagian alegría y hacen que cualquier momento sea especial.' },
+      { id: 'r19', type: 'Ternura',    text: 'Amo tu ternura, esa que se refleja en cada gesto y palabra que compartes conmigo, aquella ternura que tienes al hablarme por las noches.' },
+      { id: 'r20', type: 'Tu risa',    text: 'Amo tu risa, esa melodía que alegra mi corazón y me hace sentir vivo.' },
+          { id: 'r12', type: 'Paciencia',    text: 'Amo tu paciencia, que pese a que puedan haber momentos díficiles, siempre estás ahi para mí.'},
+      { id: 'r13', type: 'Tu corazón',    text: 'Amo la forma tan preciosa que tienes para llegar a las personas.'},
+      { id: 'r14', type: 'Tu corazón',    text: 'Amo tu corazón, porque eres bondadosa, una gran amiga, una excelente hermana y una persona increíble.'},
+      { id: 'r15', type: 'Detalles',   text: 'Amo los detalles que tienes conmigo, aunque estemos lejos siempre encuentras la forma de hacerme sentir especial, ya sea subiendome a historias, reposteando publicaciones mías, eres increíble.' },
+
+      { id: 'r18', type: 'Risas',      text: 'Amo tus risas, esas que contagian alegría y hacen que cualquier momento sea especial.' },
+      { id: 'r19', type: 'Ternura',    text: 'Amo tu ternura, esa que se refleja en cada gesto y palabra que compartes conmigo, aquella ternura que tienes al hablarme por las noches.' },
+      { id: 'r20', type: 'Tu risa',    text: 'Amo tu risa, esa melodía que alegra mi corazón y me hace sentir vivo.' },
+      { id: 'r21', type: 'Tu corazón', text: 'Amo tu corazón, porque no se aguanta lo que pasa, aunque duela. Prefiere decirlo, enfrentarlo, entenderlo. Su forma de sentir es honesta y sin máscara.'},
+
+      { id: 'r22', type: 'Tu corazón', text: 'Amo tu corazón, porque tu forma de amar exige profundidad.'},
+      { id: 'r23', type: 'Tu corazón', text: 'Amo tu corazón, porque en un mundo tan acelerado, tu corazón sabe detenerse a valorar lo esencial, amo tu espiritualidad.'},
+      { id: 'r24', type: 'Tu corazón', text: 'Amo tu corazón, porque ama desde tu historia. Todo lo que has vivido, lo que has superado, lo usas para construir.'},
+            { id: 'r25', type: 'Tu corazón', text: 'Amo tu corazón, porque tu forma de amar me da sentido. Siento que tu corazón me aterriza, me da un motivo para hacer las cosas bien.'},
+                  { id: 'r25', type: 'Tu corazón', text: 'Amo tu corazón, porque hay una parte suya que solo me muestras a mí. Esa parte íntima, pequeña, que no todos ven. Amar tu corazón es haber sido invitado a ver eso.'},
+                         { id: 'r26', type: 'Tu corazón', text: 'Amo tu corazón, porque tu manera de preocuparte por las personas es única. Siempre preguntas con el corazón, porque realmente te importa el resto.'},
+                         { id: 'r27', type: 'Tu corazón', text: 'Amo tu corazón, porque tu historia no te endureción. Te hizo más madura y sabia. Tu corazón sigue siendo tierno y precioso.'},
+        { id: 'r28', type: 'Tu corazón', text: 'Amo tu corazón, porque me enseña a amar mejor, no solo por lo que dice, si no por lo que es.'},
+        { id: 'r29', type: 'Tu corazón', text: 'Amo tu corazón, porque es tuyo.'},
+        { id: 'r30', type: 'Atracción', text: 'Amo tu cuerpo, desde tus preciosos labios hasta tus hermosas pestañas, me encantas.'},
+        { id: 'r30', type: 'Atracción', text: 'Amo tus expresiones.'},
+        { id: 'r31', type: 'Tu corazón', text: 'Amo la forma que tienes de ver las cosas.'},
+        { id: 'r32', type: 'Tu corazón', text: 'Amo lo dedicada que eres.'},
+        { id: 'r33', type: 'Tu corazón', text: 'Amo la visión que tienes de tu vida, y la forma en la que me la haces llegar.'},
+        { id: 'r34', type: 'Tu corazón', text: 'Amo amarte.'},
+        
+        
+        
+        
+        
+                                    
+      
+      
+      
+    ];
+
+    // Mapeo de tipos -> color rosado / paleta clara (se repiten tipos)
+    const typeToColor = {
+      'Tu corazón': '#ffb6d6',
+      'Atracción':  '#ff6b6b',
+      'Ternura':    '#9fe7e7',
+      'Risas':      '#ffd56b',
+      'Apoyo':      '#b7f2c0',
+      'Tu mente':   '#d6b3ff',
+      'Tu esencia': '#ff9ec0',
+      'Tu risa':    '#ffc4dd',
+      'Detalles':   '#ffd0a8',
+      'Aventura':   '#ffb3e6',
+      'Cocina':     '#ffd9e6',
+      'Confianza':  '#bdefff',
+      'Paciencia':  '#e6f7d6',
+      'Curiosidad': '#fbd6ff'
+    };
+
+    // DOM refs
+    const svg = document.getElementById('heart-mosaic');
+    const grid = document.getElementById('grid');
+    const tooltip = document.getElementById('tooltip');
+
+    // ViewBox sizes (coinciden con SVG viewBox)
+    const VB_W = 800;
+    const VB_H = 700;
+    const GAP = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 4;
+
+    // Genera grid con N piezas, una por cada razón (cada razón aparece exactamente una vez)
+ function buildGridFromReasons() {
+  grid.innerHTML = '';
+
+  const totalPieces = reasons.length * 3; // aumenta densidad
+  const aspect = VB_W / VB_H;
+  const density = Math.sqrt(totalPieces);
+  let cols = Math.round(density * Math.sqrt(aspect) * 1.3);
+  let rows = Math.round(density / Math.sqrt(aspect) * 1.3);
+  cols = Math.max(cols, 4);
+  rows = Math.max(rows, 4);
+
+  const pieceW = (VB_W - (cols - 1) * GAP) / cols;
+  const pieceH = (VB_H - (rows - 1) * GAP) / rows;
+
+  const shuffled = shuffleArray(reasons.slice());
+  let placed = 0;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = c * (pieceW + GAP);
+      const y = r * (pieceH + GAP);
+      const cx = x + pieceW / 2;
+      const cy = y + pieceH / 2;
+
+      // 💗 sólo agregamos si el centro está dentro del corazón
+      if (!pointInHeart(cx, cy)) continue;
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', x.toFixed(2));
+      rect.setAttribute('y', y.toFixed(2));
+      rect.setAttribute('width', pieceW.toFixed(2));
+      rect.setAttribute('height', pieceH.toFixed(2));
+      rect.classList.add('piece');
+
+      const reason = shuffled[placed % reasons.length];
+      const color = typeToColor[reason.type] || randomPastel(0.6);
+      rect.setAttribute('fill', color);
+
+      const rot = (Math.random() * 12 - 6).toFixed(2) + 'deg';
+      rect.style.setProperty('--rot', rot);
+      rect.dataset.text = reason.text;
+
+      rect.addEventListener('pointerenter', onEnter);
+      rect.addEventListener('pointermove', onMove);
+      rect.addEventListener('pointerleave', onLeave);
+      rect.addEventListener('click', onClick);
+
+      grid.appendChild(rect);
+      placed++;
+    }
+  }
+}
+
+function pointInHeart(x, y) {
+  const nx = (x - 400) / 400;
+  const ny = (y - 350) / 350;
+  const value = Math.pow(nx * nx + ny * ny - 1, 3) - nx * nx * Math.pow(ny, 3);
+  return value <= 0.2; // antes era 0 → pequeño margen hacia afuera
+}
+
+
+    // Interacciones tooltip (solo muestra la frase: dataset.text)
+    let pinned = null;
+    function onEnter(e){
+      if(pinned) return;
+      const el = e.currentTarget;
+      showTooltip(el.dataset.text, e.clientX, e.clientY, false);
+    }
+    function onMove(e){
+      if(pinned) return;
+      moveTooltip(e.clientX, e.clientY);
+    }
+    function onLeave(e){
+      if(pinned) return;
+      hideTooltip();
+    }
+    function onClick(e){
+      const el = e.currentTarget;
+      if(pinned === el){ pinned = null; hideTooltip(); return; }
+      pinned = el;
+      const bbox = el.getBoundingClientRect();
+      showTooltip(el.dataset.text, bbox.left + bbox.width/2, bbox.top + bbox.height/2, true);
+    }
+
+    function showTooltip(text, clientX, clientY, pinnedFlag){
+      tooltip.textContent = text;
+      // ajustamos evitando que el tooltip quede fuera de pantalla
+      const margin = 12;
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      let left = clientX;
+      let top = clientY;
+
+      // si pinned (click), lo ubicamos arriba del rect; si hover usamos pointer location
+      if(pinnedFlag){
+        left = clientX; top = clientY - 14;
+      } else {
+        left = clientX + 0;
+        top = clientY - 12;
+      }
+
+      // limit bounds
+      if(left < margin) left = margin;
+      if(left > winW - margin) left = winW - margin;
+      if(top < margin) top = margin + 40;
+      if(top > winH - margin) top = winH - margin;
+
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+      tooltip.classList.add('show');
+      tooltip.style.pointerEvents = pinnedFlag ? 'auto' : 'none';
+    }
+
+    function moveTooltip(clientX, clientY){
+      let left = clientX;
+      let top = clientY - 12;
+      const margin = 12;
+      if(left < margin) left = margin;
+      if(left > window.innerWidth - margin) left = window.innerWidth - margin;
+      if(top < margin) top = margin + 40;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    }
+
+    function hideTooltip(){
+      tooltip.classList.remove('show');
+      tooltip.style.pointerEvents = 'none';
+    }
+
+    // Click fuera para des-fijar tooltip si quedó fijado
+    document.addEventListener('pointerdown', (e)=>{
+      if(pinned){
+        // si clic fuera del rect fijado, liberar
+        if(!pinned.contains(e.target)){
+          pinned = null;
+          hideTooltip();
+        }
+      }
+    });
+
+    // utilidad: shuffle
+    function shuffleArray(arr){
+      for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // utilidad: color pastel random (fallback)
+    function randomPastel(alpha = 0.6){
+      const h = Math.floor(Math.random() * 360);
+      return `hsla(${h}, 85%, 78%, ${alpha})`;
+    }
+
+    // rebuild responsive al resize (debounce)
+    let rt;
+    function rebuild(){
+      buildGridFromReasons();
+    }
+    window.addEventListener('resize', ()=>{ clearTimeout(rt); rt = setTimeout(rebuild, 140); });
+
+    // init
+    rebuild();
+  </script>
+</body>
+</html>
